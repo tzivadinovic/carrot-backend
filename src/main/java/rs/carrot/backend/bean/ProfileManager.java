@@ -1,4 +1,4 @@
-package rs.carrot.backend.bean.converter;
+package rs.carrot.backend.bean;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;

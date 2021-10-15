@@ -20,7 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import rs.carrot.backend.bean.converter.ProfileManager;
+import rs.carrot.backend.bean.ProfileManager;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -76,9 +76,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 throw new BadCredentialsException("auth.invalidCredentials");
 
             if (!user.isCredentialsNonExpired())
-                return new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+                return new UsernamePasswordAuthenticationToken(username, user.getPassword(), Collections.emptyList());
 
-            return new UsernamePasswordAuthenticationToken(username, null, user.getAuthorities());
+            return new UsernamePasswordAuthenticationToken(username, user.getPassword(), user.getAuthorities());
         };
     }
 
@@ -93,9 +93,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             UserDetails user = userDetailsService.loadUserByUsername(username);
 
             if (!user.isCredentialsNonExpired())
-                return new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+                return new UsernamePasswordAuthenticationToken(username, user.getPassword(), Collections.emptyList());
 
-            return new UsernamePasswordAuthenticationToken(username, null, user.getAuthorities());
+            return new UsernamePasswordAuthenticationToken(username, user.getPassword(), user.getAuthorities());
         };
     }
 

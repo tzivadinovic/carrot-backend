@@ -33,7 +33,8 @@ public class Product extends Auditable {
     private Double discountPrice;
     @Column(name = "ean")
     private String ean;
-    @Column(name = "sub_category_fk")
-    private Integer subCategory;
+    @JoinColumn(name = "sub_category_fk", referencedColumnName = "sub_category_id")
+    @ManyToOne
+    private SubCategory subCategory;
 
 }

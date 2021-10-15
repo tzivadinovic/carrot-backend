@@ -1,6 +1,7 @@
 package rs.carrot.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -13,6 +14,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
+import static com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY;
 import static javax.persistence.CascadeType.MERGE;
 import static javax.persistence.FetchType.EAGER;
 import static rs.carrot.backend.entity.domain.RecordStatus.*;
@@ -41,7 +43,9 @@ public class User extends Auditable implements UserDetails {
     @Column(name = "username")
     private String username;
     @Column(name = "password")
+    @JsonProperty(access = WRITE_ONLY)
     private String password;
+    @JsonIgnore
     @ToString.Exclude
     @ManyToMany(fetch = EAGER, cascade = MERGE)
     @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_fk"), inverseJoinColumns = @JoinColumn(name = "role_fk"))

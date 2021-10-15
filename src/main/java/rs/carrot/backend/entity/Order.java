@@ -5,11 +5,12 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Data
 @Entity
 @NoArgsConstructor
-@Table(name = "order")
+@Table(name = "`order`")
 @EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
 public class Order extends Auditable {
     @Id
@@ -22,5 +23,8 @@ public class Order extends Auditable {
     private User user;
     @Column(name = "total_price")
     private Double totalPrice;
+    @JoinColumn(name = "product_id", referencedColumnName = "order_id")
+    @OneToMany
+    List<Product> products;
 
 }
