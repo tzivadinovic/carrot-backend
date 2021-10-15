@@ -1,21 +1,21 @@
 package rs.carrot.backend.service;
 
-import java.util.Collection;
-import java.util.List;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import rs.carrot.backend.entity.*;
+import rs.carrot.backend.entity.Address;
+
+import java.util.List;
 
 public interface AddressService {
 
-	List<Address> findAll(Specification<Address> specification, Sort sort);
+    List<Address> findAll(Specification<Address> specification, Sort sort);
 
-	Address save(Address address);
+    Address save(Address address);
 
-	Address update(Address address);
+    Address update(Address address);
 
-	Address findById(Integer addressId);
+    Address findById(Integer addressId);
 
-	void deleteById(Integer addressId);
+    void deleteById(Integer addressId);
 
 }

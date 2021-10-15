@@ -1,7 +1,5 @@
 package rs.carrot.backend.security;
 
-import java.util.Collections;
-import java.util.Locale;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,66 +16,69 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.Collections;
+import java.util.Locale;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-private final JwtProvider jwtProvider;
-	private final UserDetailsService userDetailsService;
-	
-	public SecurityConfig(JwtProvider jwtProvider, UserDetailsService userDetailsService) {
-		this.jwtProvider = jwtProvider;
-		this.userDetailsService = userDetailsService;
-	}
+    private final JwtProvider jwtProvider;
+    private final UserDetailsService userDetailsService;
 
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		http.httpBasic().disable()
-				.csrf().disable()
-				.cors().and()
-				.authorizeRequests().anyRequest().authenticated().and()
-				.addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtProvider))
-				.addFilterBefore(new JwtAuthorizationFilter(authorizationManager(), jwtProvider), UsernamePasswordAuthenticationFilter.class)
-				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and();
-	}
+    public SecurityConfig(JwtProvider jwtProvider, UserDetailsService userDetailsService) {
+        this.jwtProvider = jwtProvider;
+        this.userDetailsService = userDetailsService;
+    }
 
-	@Bean
-	@Qualifier("authenticationManager")
-	@Override
-	public AuthenticationManager authenticationManager() {
-		return authentication -> {
-			String username = authentication.getName().toLowerCase(Locale.ROOT).trim();
-			String password = authentication.getCredentials().toString();
-			UserDetails user = userDetailsService.loadUserByUsername(username);
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.httpBasic().disable()
+                .csrf().disable()
+                .cors().and()
+                .authorizeRequests().anyRequest().authenticated().and()
+                .addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtProvider))
+                .addFilterBefore(new JwtAuthorizationFilter(authorizationManager(), jwtProvider), UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and();
+    }
 
-			if (!passwordEncoder().matches(password, user.getPassword()))
-				throw new BadCredentialsException("auth.invalidCredentials");
+    @Bean
+    @Qualifier("authenticationManager")
+    @Override
+    public AuthenticationManager authenticationManager() {
+        return authentication -> {
+            String username = authentication.getName().toLowerCase(Locale.ROOT).trim();
+            String password = authentication.getCredentials().toString();
+            UserDetails user = userDetailsService.loadUserByUsername(username);
 
-			if (!user.isCredentialsNonExpired())
-				return new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+            if (!passwordEncoder().matches(password, user.getPassword()))
+                throw new BadCredentialsException("auth.invalidCredentials");
 
-			return new UsernamePasswordAuthenticationToken(username, null, user.getAuthorities());
-		};
-	}
+            if (!user.isCredentialsNonExpired())
+                return new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
 
-	@Bean
-	@Qualifier("authorizationManager")
-	public AuthenticationManager authorizationManager() {
-		return authentication -> {
-			if (authentication == null)
-				return null;
+            return new UsernamePasswordAuthenticationToken(username, null, user.getAuthorities());
+        };
+    }
 
-			String username = authentication.getName().toLowerCase(Locale.ROOT).trim();
-			UserDetails user = userDetailsService.loadUserByUsername(username);
+    @Bean
+    @Qualifier("authorizationManager")
+    public AuthenticationManager authorizationManager() {
+        return authentication -> {
+            if (authentication == null)
+                return null;
 
-			if (!user.isCredentialsNonExpired())
-				return new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+            String username = authentication.getName().toLowerCase(Locale.ROOT).trim();
+            UserDetails user = userDetailsService.loadUserByUsername(username);
 
-			return new UsernamePasswordAuthenticationToken(username, null, user.getAuthorities());
-		};
-	}
+            if (!user.isCredentialsNonExpired())
+                return new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
 
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
+            return new UsernamePasswordAuthenticationToken(username, null, user.getAuthorities());
+        };
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }
