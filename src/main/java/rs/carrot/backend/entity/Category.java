@@ -19,8 +19,4 @@ public class Category extends Auditable {
     private Integer id;
     @Column(name = "name")
     private String name;
-    @JoinColumn(name = "sub_category_fk", referencedColumnName = "sub_category_id")
-    @ManyToOne
-    private SubCategory subCategory;
-
 }
