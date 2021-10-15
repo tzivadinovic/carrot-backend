@@ -5,6 +5,8 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.CredentialsExpiredException;
@@ -23,13 +25,13 @@ import java.util.stream.Collectors;
 
 @Component
 public class JwtProvider {
-    private final byte[] SECRET = KeyGenerators.secureRandom(512).generateKey();
-    private final Algorithm algorithm = Algorithm.HMAC512(SECRET);
-    private final long VALIDITY = 7200000;
+    @Value("${jwt.secret:secret}")
+    private String SECRET;
+    private final long VALIDITY = 7200;
 
     public String createToken(String username, Collection<? extends GrantedAuthority> authorities) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() - VALIDITY);
+        Date validity = new Date(now.getTime() + VALIDITY * 1000);
         return JWT.create()
                 .withSubject(username)
                 .withArrayClaim("roles", authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()).toArray(new String[]{}))
@@ -42,7 +44,7 @@ public class JwtProvider {
             throw new BadCredentialsException("No token provided");
 
         try {
-            return JWT.require(algorithm)
+            return JWT.require(Algorithm.HMAC512(SECRET))
                     .build()
                     .verify(token);
         } catch (TokenExpiredException ex) {

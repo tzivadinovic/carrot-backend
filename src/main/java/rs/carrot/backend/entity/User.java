@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static javax.persistence.CascadeType.MERGE;
+import static javax.persistence.FetchType.EAGER;
 import static rs.carrot.backend.entity.domain.RecordStatus.*;
 
 @Data
@@ -42,7 +43,7 @@ public class User extends Auditable implements UserDetails {
     @Column(name = "password")
     private String password;
     @ToString.Exclude
-    @ManyToMany(fetch = FetchType.EAGER, cascade = MERGE)
+    @ManyToMany(fetch = EAGER, cascade = MERGE)
     @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_fk"), inverseJoinColumns = @JoinColumn(name = "role_fk"))
     private List<Role> roles;
 
@@ -51,7 +52,6 @@ public class User extends Auditable implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return getRoles();
     }
-
 
     @JsonIgnore
     @Override
