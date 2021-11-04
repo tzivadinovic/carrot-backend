@@ -27,7 +27,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .csrf().disable()
                 .cors().and()
                 // TODO: implement strict security allowing this endpoint to be accessed only from 'auth-service'
-                .authorizeRequests().antMatchers("/users/*/details").permitAll().and()
+                .authorizeRequests().antMatchers("/products/*/details").permitAll().and()
                 .authorizeRequests().anyRequest().authenticated().and()
                 .addFilterBefore(new JwtAuthorizationFilter(authorizationManager(), jwtProvider), UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and();
