@@ -34,7 +34,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.httpBasic().disable()
                 .csrf().disable()
-                .cors().and()
+                .cors().disable()
                 .authorizeRequests().antMatchers("/login").permitAll().and()
                 .authorizeRequests().anyRequest().authenticated().and()
                 .addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtProvider))

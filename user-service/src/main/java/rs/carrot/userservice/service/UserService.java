@@ -10,11 +10,13 @@ public interface UserService {
 
     List<User> findAll(Specification<User> specification, Sort sort);
 
+    User findById(Integer userId);
+
+    User loadByUsername(String username);
+
     User save(User user);
 
     User update(User user);
-
-    User findById(Integer userId);
 
     void deleteById(Integer userId);
 

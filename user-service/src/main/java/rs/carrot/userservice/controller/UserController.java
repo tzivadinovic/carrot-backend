@@ -30,6 +30,12 @@ public class UserController {
         return ResponseEntity.ok(userService.findById(userId));
     }
 
+    @GetMapping("/{username}/details")
+    @ApiOperation(value = "", nickname = "getUserDetailsByUsername")
+    public ResponseEntity<User> getUserDetailsByUsername(@PathVariable String username) {
+        return ResponseEntity.ok(userService.loadByUsername(username));
+    }
+
     @PostMapping
     @ApiOperation(value = "", nickname = "saveUser")
     public ResponseEntity<User> saveUser(@RequestBody User user) {

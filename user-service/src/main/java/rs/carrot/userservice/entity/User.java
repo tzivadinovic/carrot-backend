@@ -43,7 +43,6 @@ public class User extends Auditable implements UserDetails {
     @Column(name = "username")
     private String username;
     @Column(name = "password")
-    @JsonProperty(access = WRITE_ONLY)
     private String password;
     @JsonIgnore
     @ToString.Exclude
