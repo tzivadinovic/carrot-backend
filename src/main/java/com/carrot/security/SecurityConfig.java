@@ -1,13 +1,19 @@
 package com.carrot.security;
 
-import java.util.Collections;
-import java.util.Locale;
+import java.util.*;
+
+import com.carrot.bean.converter.ProfileManager;
+import com.carrot.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -17,67 +23,106 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import javax.annotation.Resource;
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
+@RequiredArgsConstructor
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-private final JwtProvider jwtProvider;
-	private final UserDetailsService userDetailsService;
-	
-	public SecurityConfig(JwtProvider jwtProvider, UserDetailsService userDetailsService) {
-		this.jwtProvider = jwtProvider;
-		this.userDetailsService = userDetailsService;
-	}
+    private final JwtProviderImpl jwtProvider;
+    private final UserDetailsService userDetailsService;
+    private final ProfileManager profileManager;
+    private final UserRepository userRepository;
+    private final Environment env;
 
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		http.httpBasic().disable()
-				.csrf().disable()
-				.cors().and()
-				.authorizeRequests().anyRequest().authenticated().and()
-				.addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtProvider))
-				.addFilterBefore(new JwtAuthorizationFilter(authorizationManager(), jwtProvider), UsernamePasswordAuthenticationFilter.class)
-				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and();
-	}
+    @Resource(name = "errorMessages")
+    private Properties errorMessages;
 
-	@Bean
-	@Qualifier("authenticationManager")
-	@Override
-	public AuthenticationManager authenticationManager() {
-		return authentication -> {
-			String username = authentication.getName().toLowerCase(Locale.ROOT).trim();
-			String password = authentication.getCredentials().toString();
-			UserDetails user = userDetailsService.loadUserByUsername(username);
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        if (profileManager.isProfileActive("dev")) {
+            http.httpBasic().disable()
+                    .cors().and()
+                    .csrf().disable()
+                    .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    .and()
+                    .authorizeRequests()
+                    .antMatchers("/swagger-ui.html", "/webjars/**", "/v2/**", "/swagger-resources/**").permitAll()
+                    .antMatchers("/**").permitAll().and()
+                    .addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtProvider, errorMessages))
+                    .addFilterBefore(new JwtAuthorizationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
+        } else if (profileManager.isProfileActive("staging") || profileManager.isProfileActive("qa")) {
+            http.httpBasic().disable()
+                    .cors().and()
+                    .csrf().disable()
+                    .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                    .authorizeRequests()
+                    .antMatchers("/swagger-ui.html", "/webjars/**", "/v2/**", "/swagger-resources/**").permitAll()
+                    .antMatchers(HttpMethod.POST, "/login").permitAll()
+                    .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    .and()
+                    .addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtProvider, errorMessages))
+                    .addFilterBefore(new JwtAuthorizationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
+        } else {
+            http.httpBasic().disable()
+                    .cors().and()
+                    .csrf().disable()
+                    .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    .and()
+                    .authorizeRequests()
+                    .antMatchers(HttpMethod.POST, "/login").permitAll()
+                    .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    .and()
+                    .addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtProvider, errorMessages))
+                    .addFilterBefore(new JwtAuthorizationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
+        }
+    }
 
-			if (!passwordEncoder().matches(password, user.getPassword()))
-				throw new BadCredentialsException("auth.invalidCredentials");
+    @Bean
+    @Override
+    public AuthenticationManager authenticationManager() {
+        return new AuthenticationManagerImpl(passwordEncoder(), userRepository, env);
+    }
 
-			if (!user.isCredentialsNonExpired())
-				return new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        if (profileManager.isProfileActive("dev")) {
+            configuration.setAllowedOrigins(List.of("http://127.0.0.1:3000",
+                    "http://localhost:3000",
+                    "http://localhost:4200", "http://localhost:8080"));
+        } else if (profileManager.isProfileActive("staging") || profileManager.isProfileActive("qa")) {
+            configuration.setAllowedOrigins(Collections.singletonList("localhost"));
+        } else if (profileManager.isProfileActive("prod")) {
+            configuration.setAllowedOrigins(List.of());
+        }
+        configuration.setAllowedMethods(Arrays.asList(
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList(
+                "Access-Control-Allow-Origin",
+                "Authorization",
+                "X-Refresh-Token",
+                "content-type",
+                "x-xsrf-token",
+                "XSRF-TOKEN"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 
-			return new UsernamePasswordAuthenticationToken(username, null, user.getAuthorities());
-		};
-	}
-
-	@Bean
-	@Qualifier("authorizationManager")
-	public AuthenticationManager authorizationManager() {
-		return authentication -> {
-			if (authentication == null)
-				return null;
-
-			String username = authentication.getName().toLowerCase(Locale.ROOT).trim();
-			UserDetails user = userDetailsService.loadUserByUsername(username);
-
-			if (!user.isCredentialsNonExpired())
-				return new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
-
-			return new UsernamePasswordAuthenticationToken(username, null, user.getAuthorities());
-		};
-	}
-
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }
