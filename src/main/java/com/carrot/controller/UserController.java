@@ -1,5 +1,6 @@
 package com.carrot.controller;
 
+import com.carrot.data.dto.UserDTO;
 import com.carrot.entity.*;
 import com.carrot.service.*;
 import io.swagger.annotations.ApiOperation;
@@ -33,6 +34,12 @@ public class UserController {
 	@ApiOperation(value = "", nickname = "saveUser")
 	public ResponseEntity<User> saveUser(@RequestBody User user) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(userService.save(user));
+	}
+
+	@PostMapping("/save-user-dto")
+	@ApiOperation(value = "", nickname = "saveUserDTO")
+	public ResponseEntity<User> saveUserDTO(@RequestBody UserDTO userDTO) {
+		return ResponseEntity.status(HttpStatus.CREATED).body(userService.saveUserDTO(userDTO));
 	}
 
 	@PutMapping

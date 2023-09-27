@@ -15,10 +15,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.util.Arrays;
-import java.util.Optional;
-import java.util.Properties;
 
 @Component
 @RequiredArgsConstructor
@@ -27,8 +24,7 @@ public class AuthenticationManagerImpl implements AuthenticationManager {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final Environment env;
-    @Resource(name = "errorMessages")
-    private Properties properties;
+
     @Value("${spring.security.disabled:false}")
     private String securityDisabled;
 
@@ -36,32 +32,26 @@ public class AuthenticationManagerImpl implements AuthenticationManager {
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         String username = authentication.getName();
         String password = authentication.getCredentials().toString();
-        Optional<User> userOptional = userRepository.findByUsername(username);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
 
-        if (userOptional.isEmpty())
-            throw new BadCredentialsException(properties.getProperty("auth.invalidCredentials"));
 
-        User user = userOptional.get();
         if (!user.isEnabled())
-            throw new DisabledException(properties.getProperty("auth.accountDisabled"));
+            throw new DisabledException("Account disabled");
 
-        boolean isSecurityDisabled = Boolean.parseBoolean(securityDisabled)
-                || Arrays.asList(env.getActiveProfiles()).contains("staging")
-                || Arrays.asList(env.getActiveProfiles()).contains("qa")
-                || Arrays.asList(env.getActiveProfiles()).contains("dev");
-
-        // Security override
-        if (!isSecurityDisabled) {
-            // If the user's password in database is null. We're authenticating
-            // with LDAP server.
-            if (user.getPassword() == null) {
-                if (password == null)
-                    throw new BadCredentialsException(properties.getProperty("auth.invalidCredentials"));
-            } else {
-                if (password == null || !passwordEncoder.matches(password, user.getPassword()))
-                    throw new BadCredentialsException(properties.getProperty("auth.invalidCredentials"));
-            }
+        // dev authentication override
+        if (Boolean.parseBoolean(securityDisabled) || Arrays.asList(env.getActiveProfiles()).contains("dev")) {
+            return new UsernamePasswordAuthenticationToken(username, password, user.getAuthorities());
         }
-        return new UsernamePasswordAuthenticationToken(username, null, user.getAuthorities());
+
+        if (user.getPassword() == null) {
+            user.setPassword(passwordEncoder.encode(password));
+            userRepository.save(user);
+        }
+
+        if (!passwordEncoder.matches(password, user.getPassword()))
+            throw new BadCredentialsException("Invalid username or password");
+
+        return new UsernamePasswordAuthenticationToken(username, password, user.getAuthorities());
     }
 }

@@ -22,8 +22,8 @@ public class City extends Auditable {
 	@Column(name = "zip_code")
 	private String zipCode;
 	@ManyToOne
-	@JoinColumn(name = "municipality_fk", referencedColumnName = "municipality_id")
-	private Municipality municipality;
+	@JoinColumn(name = "country_fk", referencedColumnName = "country_id")
+	private Country country;
 	
 	@Override
 	public boolean equals(Object o) {

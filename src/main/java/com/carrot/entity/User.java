@@ -4,9 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.*;
 import java.util.*;
 import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import static com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY;
 
 @Entity
 @Getter
@@ -24,7 +28,7 @@ public class User extends Auditable implements UserDetails {
 	@Column(name = "last_name")
 	private String lastName;
 	@Column(name = "phone")
-	private String phone;
+	private String phoneNumber;
 	@Column(name = "birth_date")
 	private LocalDate birthDate;
 	@Column(name = "email")
@@ -32,13 +36,17 @@ public class User extends Auditable implements UserDetails {
 	@Column(name = "username")
 	private String username;
 	@Column(name = "password")
+	@JsonProperty(access = WRITE_ONLY)
 	private String password;
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_fk"), inverseJoinColumns = @JoinColumn(name = "role_fk"))
+	private Role role;
+
 	@JsonIgnore
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 			return null;
 	}
-
 
 	@JsonIgnore
 	@Override

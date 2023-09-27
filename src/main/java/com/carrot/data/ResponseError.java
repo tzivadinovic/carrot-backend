@@ -1,11 +1,17 @@
 package com.carrot.data;
 
-import lombok.Data;
+import lombok.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+@Component
 public class ResponseError {
     private String message;
     private Integer code;

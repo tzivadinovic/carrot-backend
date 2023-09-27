@@ -20,8 +20,8 @@ public class Municipality extends Auditable {
 	@Column(name = "name")
 	private String name;
 	@ManyToOne
-	@JoinColumn(name = "country_fk", referencedColumnName = "country_id")
-	private Country country;
+	@JoinColumn(name = "city_fk", referencedColumnName = "city_id")
+	private City city;
 	
 	@Override
 	public boolean equals(Object o) {

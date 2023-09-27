@@ -1,5 +1,6 @@
 package com.carrot.service;
 
+import com.carrot.data.dto.UserDTO;
 import com.carrot.entity.*;
 import java.util.Collection;
 import java.util.List;
@@ -12,7 +13,9 @@ public interface UserService {
 
 	User save(User user);
 
-	User update(User user);
+    User saveUserDTO(UserDTO userDTO);
+
+    User update(User user);
 
 	User findById(Integer userId);
 

@@ -1,6 +1,8 @@
 package com.carrot.service.impl;
 
+import com.carrot.data.dto.UserDTO;
 import com.carrot.entity.*;
+import com.carrot.repository.RoleRepository;
 import com.carrot.repository.UserRepository;
 import com.carrot.service.UserService;
 
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
 
     @Override
     public List<User> findAll(Specification<User> specification, Sort sort) {
@@ -33,6 +36,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     public User save(User user) {
+        return userRepository.save(user);
+    }
+
+    @Override
+    public User saveUserDTO(UserDTO userDTO) {
+        Role role = userDTO.getIsAdmin() ? roleRepository.findByName("ADMIN") : roleRepository.findByName("CUSTOMER");
+        User user = userDTO.getUser();
+        user.setRole(role);
         return userRepository.save(user);
     }
 
