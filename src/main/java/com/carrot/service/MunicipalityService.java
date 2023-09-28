@@ -18,4 +18,6 @@ public interface MunicipalityService {
 
 	void deleteById(Integer municipalityId);
 
+	List<Municipality> findAllByCityId(Integer cityId);
+
 }
