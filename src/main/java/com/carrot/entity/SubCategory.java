@@ -22,10 +22,7 @@ public class SubCategory extends Auditable {
 	@ManyToOne
 	@JoinColumn(name = "category_fk", referencedColumnName = "category_id")
 	private Category category;
-	@ManyToOne
-	@JoinColumn(name = "sub_category_fk", referencedColumnName = "sub_category_id")
-	private SubCategory subCategory;
-	
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;

@@ -1,6 +1,5 @@
 use carrot;
 set foreign_key_checks = 0;
-
 create table category
 (
     category_id        int auto_increment
@@ -97,16 +96,12 @@ create table sub_category
         primary key,
     name               varchar(64)                              not null,
     category_fk        int                                      not null,
-    sub_category_fk    int                                      null comment 'Sub category of sub category',
     last_modified_date timestamp    default current_timestamp() null,
     last_modified_by   varchar(128) default 'system'            null,
     created_date       timestamp    default current_timestamp() null,
     record_status      int          default 1                   null,
     constraint fk_sub_category_category
         foreign key (category_fk) references category (category_id)
-            on update cascade,
-    constraint fk_sub_category_self
-        foreign key (sub_category_fk) references sub_category (sub_category_id)
             on update cascade
 );
 
@@ -287,6 +282,8 @@ create table user_role
         foreign key (user_fk) references user (user_id)
             on update cascade on delete cascade
 );
+
+
 
 set foreign_key_checks = 1;
 

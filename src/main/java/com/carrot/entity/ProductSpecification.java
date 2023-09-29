@@ -1,7 +1,5 @@
 package com.carrot.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.time.*;
 import java.util.*;
 import javax.persistence.*;
 import lombok.*;
